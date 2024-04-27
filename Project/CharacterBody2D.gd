@@ -1,28 +1,51 @@
 extends CharacterBody2D
 
 
+@onready var World = get_node("/root/Game/World/")
+
+
+
 const SPEED = 300.0
 const JUMP_VELOCITY = -600.0
 
-@onready var JumpLabel = get_node('/root/Game/JumpLabel')
+
+
+
+
 
 var rng = RandomNumberGenerator.new()
 var rand
 var Taunting = false
 var ScreenSize
-@export var Jumps = 2
+var MaxJumps = 1
+@export var Jumps = 1
+var Jumping = false
 var JumpCount = 0
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 
+
+@export var Touching = "None"
+
+
+
+
+
+
+
 func _ready():
-	
 	ScreenSize = get_viewport_rect().size
+	
+	
+	
+func startcamera():
+	$Camera.enabled = true
+
 	
 func anim(type):
 	if Taunting == true:
 		$AnimatedSprite2D.play(str("taunt", rand))
 	else:	
-		if Jumps < 2:
+		if Jumping == true:
 			$AnimatedSprite2D.play("jump")
 		else:
 			if type == "idle":
@@ -38,9 +61,11 @@ func _physics_process(delta):
 		velocity.y += gravity * delta
 		anim("jump")
 		$LandSound.play(0)
+		Jumping = true
 		
 	if is_on_floor():
-		Jumps = 2
+		Jumps = MaxJumps
+		Jumping = false
 
 
 	if Input.is_action_just_pressed("Move_Jump") and Jumps != 0:
@@ -48,7 +73,7 @@ func _physics_process(delta):
 		$JumpSound.play(0)
 		Jumps -= 1
 		JumpCount += 1
-		JumpLabel.text = str("[center]",JumpCount, " Jumps[/center]")
+		
 		
 	if Input.is_action_just_pressed("Taunt"):
 		if Taunting == false:
@@ -68,6 +93,11 @@ func _physics_process(delta):
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 		anim("idle")
 
+	if Input.is_action_just_pressed("Interact"):
+		if Touching != "None":
+			var node = World.find_child(Touching)
+			node.Activate()
+		pass
 
-	position = position.clamp(Vector2(0,0), ScreenSize)
+	
 	move_and_slide()
